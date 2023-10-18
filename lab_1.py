@@ -120,10 +120,10 @@ def get_solution_from_LU(L, U, f):
     y = np.array([0.0] * len(L))
     
     y = np.linalg.solve(L,f)
-    print("\n\n\ny:\n", y)
+    # print("\n\n\ny:\n", y)
     
     x = np.linalg.solve(U, y)
-    print("\n\n\nx:\n", x)
+    # print("\n\n\nx:\n", x)
     
     return [x, y]
     
@@ -144,9 +144,9 @@ def check_time():
     time_to_solve = []
     number_of_nodes = []
     
-    for i in range(2, 11):
+    for i in range(2, 25):
         number_of_nodes.append(i)
-    print(number_of_nodes)
+    # print(number_of_nodes)
     
     for i in number_of_nodes:
         start_time = time.time()
