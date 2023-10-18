@@ -189,7 +189,7 @@ def main():
     # n_y = 500
     # h_x = 1/n_x
     # h_y = 1/n_y
-    
+
     l = LU_decomposition(generate_matrix(nodes))[0]
     print("\n\nМатрица L: \n", l)
     
@@ -205,6 +205,6 @@ def main():
     plt.show()
     solution_visualisation(nodes, x)
     
-    print_graph()
+    # print_graph()
 
 main()
