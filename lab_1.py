@@ -92,8 +92,7 @@ def generating_right_parts(size):
     b = np.zeros(size**2)
     for i in range(size):
         for j in range(size):
-            b[recalculate_node_number(size, i, j)] = 1 / size**2 
-            
+            b[recalculate_node_number(size, i, j)] = 1 / size**2      
     return b 
 
 def LU_decomposition(A):
@@ -144,14 +143,20 @@ def solution_visualisation(size, res):
 def check_time():
     time_to_solve = []
     number_of_nodes = []
-    for i in range(1, 100):
+    
+    for i in range(2, 11):
         number_of_nodes.append(i)
+    print(number_of_nodes)
+    
+    for i in number_of_nodes:
         start_time = time.time()
-        L = LU_decomposition(generate_matrix(i))[0]
-        U = LU_decomposition(generating_right_parts(i))[1]
+        A = generate_matrix(i)
+        L = LU_decomposition(A)[0]
+        U = LU_decomposition(A)[1]
         x = get_solution_from_LU(L, U, generating_right_parts(i))
         end_time = time.time()
-        time_to_solve.append(end_time - start_time)
+        time_solving = end_time - start_time
+        time_to_solve.append(time_solving)
     return [time_to_solve, number_of_nodes]
 
 def print_graph():
@@ -165,7 +170,8 @@ def print_graph():
     
 def main():
     # №1 (решение с помощью функций)
-    result = generate_matrix(4)
+    nodes = 4
+    result = generate_matrix(nodes)
     print("Вид матрицы А: \n", result)
 
     # Визуализация
@@ -173,16 +179,21 @@ def main():
     plt.spy(result)
     plt.show()
 
-    result = generating_right_parts(4)
+    result = generating_right_parts(nodes)
     print("Столбец правых частей: \n", result)
     
     # №2
     ## Я не поняла какой брать столбец правых частей, поэтому взяла его из задания 1
     ## LU - разложение
-    l = LU_decomposition(generate_matrix(4))[0]
+    # n_x = 1000
+    # n_y = 500
+    # h_x = 1/n_x
+    # h_y = 1/n_y
+    
+    l = LU_decomposition(generate_matrix(nodes))[0]
     print("\n\nМатрица L: \n", l)
     
-    u = LU_decomposition(generate_matrix(4))[1]
+    u = LU_decomposition(generate_matrix(nodes))[1]
     print("\n\nМатрица U: \n", u)
     
     x = get_solution_from_LU(l, u, result)[0]
@@ -192,8 +203,8 @@ def main():
     plt.xlabel("Column index")
     plt.ylabel("Row index")
     plt.show()
-    solution_visualisation(4, x)
+    solution_visualisation(nodes, x)
     
-    # print_graph()
-    
+    print_graph()
+
 main()
