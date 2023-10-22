@@ -4,7 +4,7 @@ mp.use('TkAgg', force=True)
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-
+from scipy.sparse.linalg import splu
 #########################################################################################
 # Задание 1 (аналитическое решение)
 #########################################################################################
@@ -170,8 +170,8 @@ def print_graph():
     
 def main():
     # №1 (решение с помощью функций)
-    nodes = 4
-    result = generate_matrix(nodes)
+    nodes_1 = 4
+    result = generate_matrix(nodes_1)
     print("Вид матрицы А: \n", result)
 
     # Визуализация
@@ -179,7 +179,7 @@ def main():
     plt.spy(result)
     plt.show()
 
-    result = generating_right_parts(nodes)
+    result = generating_right_parts(nodes_1)
     print("Столбец правых частей: \n", result)
     
     # №2
@@ -189,21 +189,23 @@ def main():
     # n_y = 500
     # h_x = 1/n_x
     # h_y = 1/n_y
-
-    l = LU_decomposition(generate_matrix(nodes))[0]
-    print("\n\nМатрица L: \n", l)
+    nodes_2 = 100
+    lu = splu(generate_matrix(nodes_2))
+    x = lu.solve(generating_right_parts(nodes_2))
+    # l = LU_decomposition(generate_matrix(nodes))[0]
+    # print("\n\nМатрица L: \n", l)
     
-    u = LU_decomposition(generate_matrix(nodes))[1]
-    print("\n\nМатрица U: \n", u)
+    # u = LU_decomposition(generate_matrix(nodes))[1]
+    # print("\n\nМатрица U: \n", u)
     
-    x = get_solution_from_LU(l, u, result)[0]
+    # x = get_solution_from_LU(l, u, result)[0]
     
-    plt.spy(u)
-    plt.title("Spy plot of matrix L")
-    plt.xlabel("Column index")
-    plt.ylabel("Row index")
-    plt.show()
-    solution_visualisation(nodes, x)
+    # plt.spy(u)
+    # plt.title("Spy plot of matrix L")
+    # plt.xlabel("Column index")
+    # plt.ylabel("Row index")
+    # plt.show()
+    solution_visualisation(nodes_2, x)
     
     # print_graph()
 
