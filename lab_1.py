@@ -54,45 +54,46 @@ plt.ylabel("Row index")
 # Задание 2
 #########################################################################################
 # пересчет номера узла
-def recalculate_node_number(size, i, j):  
-    return size * i + j
+def recalculate_node_number(N_x, N_y, i, j):  
+    return N_y * i + j
 
 # проверка является ли границей
-def is_boundary(h, i, j):
-    if(i < 0 or j < 0 or i >= h or j >= h): return 1
+def is_boundary(N_x, N_y, i, j):
+    if(i < 0 or j < 0 or i >= N_x or j >= N_y): return 1
     return 0
 
 # Заполнение списка string + проверка, является ли узел граничным
-def fill_list(h, i, j):
-    string = [0] * (h**2)                         
-    if is_boundary(h, i + 1, j) == 0:
-        string[recalculate_node_number(h, i + 1, j)] = -1      # если не граничная
-    if is_boundary(h, i, j + 1) == 0:
-        string[recalculate_node_number(h, i, j + 1)] = -1
-    if is_boundary(h, i - 1 ,j) == 0:
-        string[recalculate_node_number(h, i - 1, j)] = -1
-    if is_boundary(h, i, j - 1) == 0:
-        string[recalculate_node_number(h, i, j - 1)] = -1
-    string[recalculate_node_number(h, i, j)] = 4 + 0.1 * h**2   # в центр кладем 4
+def fill_list(N_x, N_y, i, j):
+    string = [0] * (N_x*N_y)                         
+    if is_boundary(N_x, N_y, i + 1, j) == 0:
+        string[recalculate_node_number(N_x, N_y, i + 1, j)] = -1      # если не граничная
+    if is_boundary(N_x, N_y, i, j + 1) == 0:
+        string[recalculate_node_number(N_x, N_y, i, j + 1)] = -1
+    if is_boundary(N_x, N_y, i - 1 ,j) == 0:
+        string[recalculate_node_number(N_x, N_y, i - 1, j)] = -1
+    if is_boundary(N_x, N_y, i, j - 1) == 0:
+        string[recalculate_node_number(N_x, N_y, i, j - 1)] = -1
+    string[recalculate_node_number(N_x, N_y, i, j)] = 4 + 0.1 * N_x*N_y   # в центр кладем 4
     return string
 
-# Сздает матрицу A размера (size-1)^2 x (size-1)^2 и заполняет ее значениями,
-# используя функцию fill_list, возвращает заполненную матрицу A
-def generate_matrix(size):
-    size = size - 1 
-    A = np.zeros((size**2, size**2))
-    for i in range(size):
-        for j in range(size):
-            A[recalculate_node_number(size, i, j)] = fill_list(size, i, j)
+# Генерирует матрицу А размерами (N_x - 1)(N_y - 1) на (N_x - 1)(N_y - 1), где N_x, N_y заданные размеры сетки
+def generate_matrix(N_x, N_y):
+    N_x -= 1
+    N_y -= 1
+    A = np.zeros((N_x*N_y, N_x*N_y))
+    for i in range(N_x):
+        for j in range(N_y):
+            A[recalculate_node_number(N_x, N_y, i, j)] = fill_list(N_x, N_y, i, j)
     return A
 
 # Геренирует столбец правых частей
-def generating_right_parts(size):
-    size = size - 1
-    b = np.zeros(size**2)
-    for i in range(size):
-        for j in range(size):
-            b[recalculate_node_number(size, i, j)] = 1 / size**2      
+def generating_right_parts(N_x, N_y):
+    N_x -= 1
+    N_y -= 1
+    b = np.zeros(N_x*N_y)
+    for i in range(N_x):
+        for j in range(N_y):
+            b[recalculate_node_number(N_x, N_y, i, j)] = 1 / (N_x*N_y)      
     return b 
 
 def LU_decomposition(A):
@@ -119,14 +120,11 @@ def get_solution_from_LU(L, U, f):
     x = np.array([0.0] * len(L))
     y = np.array([0.0] * len(L))
     
-    y = np.linalg.solve(L,f)
-    # print("\n\n\ny:\n", y)
-    
+    y = np.linalg.solve(L,f)    
     x = np.linalg.solve(U, y)
-    # print("\n\n\nx:\n", x)
     
     return [x, y]
-    
+
 def solution_visualisation(size, res):
     S = size + 1
     x = np.arange(0, 1, 1 / S)
@@ -140,20 +138,23 @@ def solution_visualisation(size, res):
     plt.contourf(x, y, z, levels = 100, cmap = mp.cm.magma_r)
     plt.show()
     
+    
 def check_time():
     time_to_solve = []
     number_of_nodes = []
     
-    for i in range(2, 25):
+    for i in range(2, 50):
         number_of_nodes.append(i)
-    # print(number_of_nodes)
     
     for i in number_of_nodes:
         start_time = time.time()
-        A = generate_matrix(i)
-        L = LU_decomposition(A)[0]
-        U = LU_decomposition(A)[1]
-        x = get_solution_from_LU(L, U, generating_right_parts(i))
+        A = generate_matrix(i, i)
+        lu = splu(A)
+        x = lu.solve(generating_right_parts(i, i))
+        # L = LU_decomposition(A)[0]
+        # U = LU_decomposition(A)[1]
+        # x = get_solution_from_LU(L, U, generating_right_parts(i, i))
+        
         end_time = time.time()
         time_solving = end_time - start_time
         time_to_solve.append(time_solving)
@@ -170,8 +171,8 @@ def print_graph():
     
 def main():
     # №1 (решение с помощью функций)
-    nodes_1 = 4
-    result = generate_matrix(nodes_1)
+    nodes_1_x = nodes_1_y = 4
+    result = generate_matrix(nodes_1_x, nodes_1_y)
     print("Вид матрицы А: \n", result)
 
     # Визуализация
@@ -179,34 +180,18 @@ def main():
     plt.spy(result)
     plt.show()
 
-    result = generating_right_parts(nodes_1)
+    result = generating_right_parts(nodes_1_x, nodes_1_y)
     print("Столбец правых частей: \n", result)
     
     # №2
-    ## Я не поняла какой брать столбец правых частей, поэтому взяла его из задания 1
-    ## LU - разложение
-    # n_x = 1000
-    # n_y = 500
-    # h_x = 1/n_x
-    # h_y = 1/n_y
-    nodes_2 = 100
-    lu = splu(generate_matrix(nodes_2))
-    x = lu.solve(generating_right_parts(nodes_2))
-    # l = LU_decomposition(generate_matrix(nodes))[0]
-    # print("\n\nМатрица L: \n", l)
+    nodes_2_x = nodes_2_y = 120
     
-    # u = LU_decomposition(generate_matrix(nodes))[1]
-    # print("\n\nМатрица U: \n", u)
+    lu = splu(generate_matrix(nodes_2_x, nodes_2_y))
+    x = lu.solve(generating_right_parts(nodes_2_x, nodes_2_y))
+    print(x)
+
+    solution_visualisation(nodes_2_x, x)
     
-    # x = get_solution_from_LU(l, u, result)[0]
-    
-    # plt.spy(u)
-    # plt.title("Spy plot of matrix L")
-    # plt.xlabel("Column index")
-    # plt.ylabel("Row index")
-    # plt.show()
-    solution_visualisation(nodes_2, x)
-    
-    # print_graph()
+    print_graph()
 
 main()
