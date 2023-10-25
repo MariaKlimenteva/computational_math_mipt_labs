@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 from scipy.sparse.linalg import splu
+import scipy.sparse as sp
 #########################################################################################
 # Задание 1 (аналитическое решение)
 #########################################################################################
@@ -41,13 +42,13 @@ b = np.array([h**2, h**2, h**2, h**2, h**2, h**2, h**2, h**2, h**2])
 
 # Решение системы уравнений
 x = np.linalg.solve(A,b)
-print("Столбец решений для задания 1:\n", x)
+# print("Столбец решений для задания 1:\n", x)
 
 # Визуализация матрицы А
-plt.spy(A)
-plt.title("Spy plot of matrix A")
-plt.xlabel("Column index")
-plt.ylabel("Row index")
+# plt.spy(A)
+# plt.title("Spy plot of matrix A")
+# plt.xlabel("Column index")
+# plt.ylabel("Row index")
 # plt.show()
 
 #########################################################################################
@@ -73,7 +74,7 @@ def fill_list(N_x, N_y, i, j):
         string[recalculate_node_number(N_x, N_y, i - 1, j)] = -1
     if is_boundary(N_x, N_y, i, j - 1) == 0:
         string[recalculate_node_number(N_x, N_y, i, j - 1)] = -1
-    string[recalculate_node_number(N_x, N_y, i, j)] = 4 + 0.1 * N_x*N_y   # в центр кладем 4
+    string[recalculate_node_number(N_x, N_y, i, j)] = 4 + 1e-100 * N_x*N_y   # в центр кладем 4
     return string
 
 # Генерирует матрицу А размерами (N_x - 1)(N_y - 1) на (N_x - 1)(N_y - 1), где N_x, N_y заданные размеры сетки
@@ -93,7 +94,7 @@ def generating_right_parts(N_x, N_y):
     b = np.zeros(N_x*N_y)
     for i in range(N_x):
         for j in range(N_y):
-            b[recalculate_node_number(N_x, N_y, i, j)] = 1 / (N_x*N_y)      
+            b[recalculate_node_number(N_x, N_y, i, j)] = 1/(N_x*N_y)
     return b 
 
 def LU_decomposition(A):
@@ -126,17 +127,19 @@ def get_solution_from_LU(L, U, f):
     return [x, y]
 
 def solution_visualisation(size, res):
-    S = size + 1
-    x = np.arange(0, 1, 1 / S)
-    for i in range(size + 1):
-        x[i] = i / size
-    y = -x
-    z = np.zeros((S, S))
-    for i in range(1, size):
-        for j in range(1, size):
-            z[i][j] = res[(size - 1) * (i - 1) + (j - 1)]
-    plt.contourf(x, y, z, levels = 100, cmap = mp.cm.magma_r)
+    field = np.zeros((size + 1, size + 1))
+    for i in range (size - 1):
+        for j in range (size - 1):
+            field[i + 1][j + 1] = res[i + j * (size - 1)] 
+    print(field)
+    fig, ax = plt.subplots()
+    x, y = np.meshgrid(np.linspace(0, 1, size+1), np.linspace(0, 1, size+1))
+    
+    im = ax.pcolormesh(x, y, field, shading='nearest', cmap='Spectral_r')
+    fig.colorbar(im, ax=ax, label = 'value')
+    ax.plot(x, y, marker='', color='k', linestyle=None, alpha=0.5, linewidth=0.)
     plt.show()
+
     
     
 def check_time():
@@ -151,9 +154,6 @@ def check_time():
         A = generate_matrix(i, i)
         lu = splu(A)
         x = lu.solve(generating_right_parts(i, i))
-        # L = LU_decomposition(A)[0]
-        # U = LU_decomposition(A)[1]
-        # x = get_solution_from_LU(L, U, generating_right_parts(i, i))
         
         end_time = time.time()
         time_solving = end_time - start_time
@@ -172,26 +172,35 @@ def print_graph():
 def main():
     # №1 (решение с помощью функций)
     nodes_1_x = nodes_1_y = 4
-    result = generate_matrix(nodes_1_x, nodes_1_y)
-    print("Вид матрицы А: \n", result)
+    A = generate_matrix(nodes_1_x, nodes_1_y)
+    print("Вид матрицы А: \n", A)
 
     # Визуализация
     print("Визуализация матрицы с помощью spy\n")
-    plt.spy(result)
+    plt.spy(A)
+    
+    
+    plt.matshow(A, cmap='Oranges', vmin=-1, vmax=1)
     plt.show()
 
-    result = generating_right_parts(nodes_1_x, nodes_1_y)
-    print("Столбец правых частей: \n", result)
+    b = generating_right_parts(nodes_1_x, nodes_1_y)
+    print("Столбец правых частей: \n", b)
     
     # №2
     nodes_2_x = nodes_2_y = 120
     
-    lu = splu(generate_matrix(nodes_2_x, nodes_2_y))
+    A = generate_matrix(nodes_2_x, nodes_2_y)
+    # plt.matshow(A, cmap='Oranges', vmin=-1, vmax=1)
+    # plt.show()
+    
+    lu = splu(sp.csc_matrix(A))
     x = lu.solve(generating_right_parts(nodes_2_x, nodes_2_y))
+    print(generating_right_parts(nodes_2_x, nodes_2_y))
     print(x)
 
     solution_visualisation(nodes_2_x, x)
+
     
-    print_graph()
+    # print_graph()
 
 main()
