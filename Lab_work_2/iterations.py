@@ -26,7 +26,7 @@ def create_matrix():
         matrix[i, i - 1] = -1
         matrix[i - 1, i] = -1
         
-    print(matrix)
+    # print(matrix)
     return matrix
 
 def create_right_parts():
@@ -48,16 +48,14 @@ def find_optimal_iterative_parameter():
     # Выбор оптимального итерационного параметра
     lamda_max, lamda_min = calculate_eigenvalue_of_matrix()
     tau = 2/(lamda_max + lamda_min)
-    print(tau.real)
+    
     return tau
 
 # def multiply_matrix_by_vector():
 #     
     
-def iterative_solver():
-    matrix = create_matrix()
-    f = create_right_parts()
-    tau = find_optimal_iterative_parameter()
+def iterative_solver(matrix, f, tau):
+
     # Выбираем начальное приближение x0
     x0 = np.array(n * [0])
     # Инициализируем переменные для хранения невязки итераций
@@ -77,15 +75,28 @@ def iterative_solver():
         x = x_new
         k += 1
         
+    return residuals, k
+        
+
+    
+def make_graph(residuals, k):
     # Построение графика
-    plt.plot(range(k+1), residuals, marker='o')
+    plt.plot(range(k + 1), residuals, marker='2', color='c', markersize=0.5, label = 'simple iteration, no precond')
     plt.yscale('log')  # Логарифмическая шкала по оси y для удобства отображения
     plt.xlabel('Номер итерации')
     plt.ylabel('Относительная невязка')
     plt.title('Зависимость относительной невязки от номера итерации')
     plt.grid(True)
+    plt.legend()
     plt.show()
 
 def main():
-    iterative_solver()
+    matrix = create_matrix()
+    f = create_right_parts()
+    tau = find_optimal_iterative_parameter()
+    
+    residuals, k = iterative_solver(matrix, f, tau)
+    
+    make_graph(residuals, k)
+    
 main()
