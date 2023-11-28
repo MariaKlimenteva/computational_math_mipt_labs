@@ -85,7 +85,6 @@ def iterative_solver_no_precond(matrix, f, tau):
 
 def iterative_solver_precon(matrix, f):
     # Создаем диагональный предобуславливатель
-    print(matrix)
     D = np.diag(np.diag(matrix))
 
     # Вычисляем матрицу T и вектор c для метода простых итераций
@@ -98,14 +97,14 @@ def iterative_solver_precon(matrix, f):
 
     # Метод простых итераций
     x = x0
-    r0 = matrix.dot(x)
+    r0 = f - matrix.dot(x)
     r_norm0 = np.linalg.norm(r0)
     k = 0
     nevyaska = []
-    # for i in range(0, n):
+
     while True:
         x_new = (I - np.dot(T, x)) + c
-        r = matrix.dot(x_new)
+        r = f - matrix.dot(x_new)
         r_norm = np.linalg.norm(r)
         nevyaska.append(r_norm / r_norm0)  # Сохраняем относительную невязку
         if r_norm / r_norm0 < relative_eps:
@@ -135,10 +134,10 @@ def main():
     f = create_right_parts
     tau = find_optimal_iterative_parameter
     
-    nevyaska_1, k_1 = iterative_solver_no_precond(matrix(alpha, betta), f(), tau(alpha, betta)) # использование callbacks
-    make_graph(nevyaska_1, k_1)
+    # nevyaska_1, k_1 = iterative_solver_no_precond(matrix(alpha, betta), f(), tau(alpha, betta)) # использование callbacks
+    # make_graph(nevyaska_1, k_1)
     
-    # nevyaska_2, k_2 = iterative_solver_precon(matrix(alpha, betta), f())
-    # make_graph(nevyaska, k)
+    nevyaska_2, k_2 = iterative_solver_precon(matrix(alpha, betta), f())
+    make_graph(nevyaska_2, k_2)
     
 main()
