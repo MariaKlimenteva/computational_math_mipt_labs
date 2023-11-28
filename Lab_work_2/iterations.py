@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
-from scipy.sparse import csr_matrix 
+from scipy.sparse import csr_matrix
+from scipy.sparse import diags
 
 # Размер матрицы
 n = 1000
@@ -9,11 +10,7 @@ n = 1000
 # Относительная невязка
 relative_eps = 1e-4
     
-def create_matrix():
-    # Значения альфа и бетта
-    alpha = 0.01
-    betta = 10
-
+def create_matrix(alpha, betta):
     # Создание пустой матрицы
     matrix = np.zeros((n, n))
 
@@ -25,8 +22,7 @@ def create_matrix():
     for i in range(1, n):
         matrix[i, i - 1] = -1
         matrix[i - 1, i] = -1
-        
-    # print(matrix)
+    
     return matrix
 
 def create_right_parts():
@@ -36,52 +32,92 @@ def create_right_parts():
     f = np.array(column)
     return f
 
-def calculate_eigenvalue_of_matrix():
+def calculate_eigenvalue_of_matrix(alpha, betta):
     # Вычислим собственные числа матрицы
-    matrix = create_matrix()
+    matrix = create_matrix(alpha, betta)
     eigen_values = linalg.eigvals(matrix)
     lamda_min = min(eigen_values)
     lamda_max = max(eigen_values)
     return lamda_max, lamda_min
     
-def find_optimal_iterative_parameter():
+def find_optimal_iterative_parameter(alpha, betta):
     # Выбор оптимального итерационного параметра
-    lamda_max, lamda_min = calculate_eigenvalue_of_matrix()
+    lamda_max, lamda_min = calculate_eigenvalue_of_matrix(alpha, betta)
     tau = 2/(lamda_max + lamda_min)
     
     return tau
 
-# def multiply_matrix_by_vector():
-#     
-    
-def iterative_solver(matrix, f, tau):
+def multiply(matrix, vector):
+    result = [0] * n 
+    sum = 0
+    for i in range(n):
+        # row = matrix[i]
+        sum = 0
+        for j in range(n):
+            # if row[j] != 0:
+            sum += matrix[i][j] * vector[j]
+        result[i] = sum
+    return np.array(result)
 
+    
+def iterative_solver_no_precond(matrix, f, tau):
     # Выбираем начальное приближение x0
     x0 = np.array(n * [0])
     # Инициализируем переменные для хранения невязки итераций
     x = x0
-    r0 = f - matrix.dot(x)
+    r0 = f - matrix.dot(x)#multiply(matrix, x) #
     r_norm0 = np.linalg.norm(r0)
     k = 0
-    residuals = []
+    nevyaska = []
     
     while True:
-        x_new = x + tau * (f - matrix.dot(x))
-        r = f - matrix.dot(x_new)
+        x_new = x + tau * (f - matrix.dot(x)) # multiply(matrix, x)
+        
+        r = f - matrix.dot(x_new) # multiply(matrix, x_new)
         r_norm = np.linalg.norm(r)
-        residuals.append(r_norm / r_norm0)  # Сохраняем относительную невязку
+        nevyaska.append(r_norm / r_norm0)  # Сохраняем относительную невязку
         if r_norm / r_norm0 < relative_eps:
             break
         x = x_new
         k += 1
         
-    return residuals, k
-        
+    return nevyaska, k
 
+def iterative_solver_precon(matrix, f):
+    # Создаем диагональный предобуславливатель
+    print(matrix)
+    D = np.diag(np.diag(matrix))
+
+    # Вычисляем матрицу T и вектор c для метода простых итераций
+    T = np.dot(np.linalg.inv(D), matrix)
+    c = np.dot(np.linalg.inv(D), f)
+    I = np.eye(n)
+
+    # Начальное приближение
+    x0 = np.array(n * [0])
+
+    # Метод простых итераций
+    x = x0
+    r0 = matrix.dot(x)
+    r_norm0 = np.linalg.norm(r0)
+    k = 0
+    nevyaska = []
+    # for i in range(0, n):
+    while True:
+        x_new = (I - np.dot(T, x)) + c
+        r = matrix.dot(x_new)
+        r_norm = np.linalg.norm(r)
+        nevyaska.append(r_norm / r_norm0)  # Сохраняем относительную невязку
+        if r_norm / r_norm0 < relative_eps:
+            break
+        x = x_new
+        k += 1
+        
+    return nevyaska, k  
     
-def make_graph(residuals, k):
+def make_graph(nevyaska, k):
     # Построение графика
-    plt.plot(range(k + 1), residuals, marker='2', color='c', markersize=0.5, label = 'simple iteration, no precond')
+    plt.plot(range(k + 1), nevyaska, marker='2', color='c', markersize=0.5, label = 'simple iteration, no precond')
     plt.yscale('log')  # Логарифмическая шкала по оси y для удобства отображения
     plt.xlabel('Номер итерации')
     plt.ylabel('Относительная невязка')
@@ -91,12 +127,18 @@ def make_graph(residuals, k):
     plt.show()
 
 def main():
-    matrix = create_matrix()
-    f = create_right_parts()
-    tau = find_optimal_iterative_parameter()
+    # Значения альфа и бетта
+    alpha = 0.01
+    betta = 10
     
-    residuals, k = iterative_solver(matrix, f, tau)
+    matrix = create_matrix
+    f = create_right_parts
+    tau = find_optimal_iterative_parameter
     
-    make_graph(residuals, k)
+    nevyaska_1, k_1 = iterative_solver_no_precond(matrix(alpha, betta), f(), tau(alpha, betta)) # использование callbacks
+    make_graph(nevyaska_1, k_1)
+    
+    # nevyaska_2, k_2 = iterative_solver_precon(matrix(alpha, betta), f())
+    # make_graph(nevyaska, k)
     
 main()
