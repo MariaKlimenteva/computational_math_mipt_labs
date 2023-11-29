@@ -44,6 +44,8 @@ def find_optimal_iterative_parameter(alpha, betta):
     # Выбор оптимального итерационного параметра
     lamda_max, lamda_min = calculate_eigenvalue_of_matrix(alpha, betta)
     tau = 2/(lamda_max + lamda_min)
+    q = (lamda_max-lamda_min)/(lamda_max+lamda_min)
+    print(q)
     
     return tau
 
@@ -81,7 +83,7 @@ def iterative_solver_no_precond(matrix, f, tau):
         x = x_new
         k += 1
         
-    return nevyaska, k
+    return nevyaska, k, x
 
 def iterative_solver_precon(matrix, f):
     # Создаем диагональный предобуславливатель
@@ -97,13 +99,13 @@ def iterative_solver_precon(matrix, f):
 
     # Метод простых итераций
     x = x0
-    r0 = f - matrix.dot(x)
+    r0 = f - multiply(matrix, x) #matrix.dot(x)
     r_norm0 = np.linalg.norm(r0)
     k = 0
     nevyaska = []
 
     while True:
-        x_new = (I - np.dot(T, x)) + c
+        x_new = ((I - T)).dot(x) + c
         r = f - matrix.dot(x_new)
         r_norm = np.linalg.norm(r)
         nevyaska.append(r_norm / r_norm0)  # Сохраняем относительную невязку
@@ -112,28 +114,19 @@ def iterative_solver_precon(matrix, f):
         x = x_new
         k += 1
         
-    return nevyaska, k 
-    
-def make_graph(nevyaska, k):
-    # Построение графика
-    plt.plot(range(k + 1), nevyaska, marker='2', color='c', markersize=0.5, label = 'simple iteration, no precond')
-    plt.yscale('log')  # Логарифмическая шкала по оси y для удобства отображения
-    plt.xlabel('Номер итерации')
-    plt.ylabel('Относительная невязка')
-    plt.title('Зависимость относительной невязки от номера итерации')
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    return nevyaska, k, x
 
 def CG(A, b):
     num_iters = 0
+    nevyaska = []
 
     def callback(xk):
         nonlocal num_iters
         num_iters += 1
+        nevyaska.append(np.linalg.norm(b - A.dot(xk)))
 
     x, status = cg(A, b, tol=1e-4, callback=callback)
-    return x, status, num_iters
+    return x, status, num_iters, nevyaska
 
 def main():
     # Значения альфа и бетта
@@ -144,16 +137,33 @@ def main():
     f = create_right_parts
     tau = find_optimal_iterative_parameter
     
-    # nevyaska_1, k_1 = iterative_solver_no_precond(matrix(alpha, betta), f(), tau(alpha, betta)) # использование callbacks
-    # make_graph(nevyaska_1, k_1)
+    nevyaska_1, k_1, x_1 = iterative_solver_no_precond(matrix(alpha, betta), f(), tau(alpha, betta))
     
-    # nevyaska_2, k_2 = iterative_solver_precon(matrix(alpha, betta), f())
-    # make_graph(nevyaska_2, k_2)
-        
-    x, status, num_iters = CG(matrix(alpha, betta), f())
+    nevyaska_2, k_2, x_2 = iterative_solver_precon(matrix(alpha, betta), f())
+    
+    x_3, status, k_3, nevyaska_3 = CG(matrix(alpha, betta), f())
+    
+
     
     # Построение графика
-    plt.plot(range(n), x, marker='2', color='c', markersize=0.5, label = 'CG')
+    plt.plot(range(k_1 + 1), nevyaska_1, marker='2', color='c', markersize=0.5, label = 'simple iteration, no precond')
+    plt.plot(range(k_2 + 1), nevyaska_2, marker='2', color='r', markersize=0.5, label = 'diagonal precond')
+    plt.plot(range(k_3), nevyaska_3, marker='v', color='b', markersize=0.5, label = 'CG')
+    plt.yscale('log')  # Логарифмическая шкала по оси y для удобства отображения
+    plt.xlabel('Номер итерации')
+    plt.ylabel('Относительная невязка')
+    plt.title('Зависимость относительной невязки от номера итерации')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+        
+    
+    # Построение графика
+    plt.semilogy(range(n), x_3, marker='2', color='c', markersize=0.5, label = 'CG')
+    plt.semilogy(range(n), x_1, marker='o', color='b', markersize=0.5, label = 'simple iterations, no precond')
+    plt.semilogy(range(n), x_2, marker='v', color='r', markersize=0.5, label = 'simple iterations, diag precond')
+    # plt.yscale('log') 
+    # plt.semilogy()
     plt.xlabel('Component index')
     plt.ylabel('Solution x')
     plt.title('Зависимость x(component index)')
