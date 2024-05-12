@@ -7,8 +7,8 @@ a_out = 500
 h = 1/20
 Nx = int(2/h)   # Количество точек по x
 Ny = int(2/h)   # Количество точек по y
-dt = 0.000000001  # Шаг по времени
-tolerance = 1e-5  # Точность для критерия остановки
+dt = 1.5625e-7  # Шаг по времени
+tolerance = 1e-4  # Точность для критерия остановки
 error = []
 
 # Создание сетки
@@ -105,22 +105,13 @@ plt.colorbar()
 plt.title(f"Установившееся решение (t = {t:.3f})")
 plt.xlabel("x")
 plt.ylabel("y")
-# plt.savefig("graph.png")
-
-# 2D график решения
-# plt.figure()
-# plt.contourf(X, Y, U, levels=20)
-# plt.colorbar()
-# plt.title(f"Установившееся решение (t = {t:.3f})")
-# plt.xlabel("x")
-# plt.ylabel("y")
 plt.savefig("2D graph.png")
 
 # График сходимости
 iters = list(range(0, len(error)))
 print(iters)
 plt.figure()
-plt.plot(error, iters)
+plt.plot(iters, error)
 plt.title("Сходимость решения")
 plt.xlabel("Итерация")
 plt.ylabel("Максимальная ошибка")
